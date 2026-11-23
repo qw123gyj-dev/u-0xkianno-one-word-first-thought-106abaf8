@@ -1,51 +1,70 @@
 // One Word, First Thought — entry writer (program/v1, Node 22, stdlib only).
-// Writes the one-word entry to $MAKEFUN_OUTPUT_DIR/entry.txt
-// (fallback /output/entry.txt), then reads it back and verifies the bytes match.
+//
+// The entry: "psithurism" — the sound of wind whispering through trees.
+// Chosen because it is vivid (a sound you can almost hear), surprising
+// (rare enough that few entrants will reach for it), and a little witty:
+// the word itself whispers, with that soft "psith-" opening echoing what
+// it names. It is a real word, from Greek psithuros, "whispering".
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const WORD = "petrichor";
+// The single word this program submits.
+const ENTRY = "psithurism";
 
-const MIN_CHARS = 1;
-const MAX_CHARS = 24;
+// The gate from the rules: entry.txt must hold UTF-8 text of 1 to 24
+// characters, and it must not be only white space.
+const LOWEST = 1;
+const HIGHEST = 24;
 
-function main(): void {
-  // Gate: UTF-8 text of 1 to 24 characters, not only white space.
-  if (WORD.length < MIN_CHARS || WORD.length > MAX_CHARS) {
-    throw new Error(
-      `entry must be ${MIN_CHARS} to ${MAX_CHARS} characters, got ${WORD.length}`,
+// Every way the entry could fail the gate, checked up front so the program
+// never writes a bad file. Returns a list of problems; empty means valid.
+function findProblems(text: string): string[] {
+  const problems: string[] = [];
+  // Count code points, not UTF-16 units, so a letter is a letter.
+  const size = [...text].length;
+  if (size < LOWEST || size > HIGHEST) {
+    problems.push(
+      `entry is ${size} characters, but the gate allows ${LOWEST} to ${HIGHEST}`,
     );
   }
-  if (WORD.trim().length === 0) {
-    throw new Error("entry must not be only white space");
+  if (text.trim().length === 0) {
+    problems.push("entry is only white space");
   }
-
-  // Exactly one word: no white space, no punctuation, letters only.
-  if (/\s/.test(WORD)) {
-    throw new Error(`entry must be exactly one word, got whitespace in ${JSON.stringify(WORD)}`);
+  if (/\s/.test(text)) {
+    problems.push(`entry contains white space: ${JSON.stringify(text)}`);
   }
-  if (!/^[A-Za-z]+$/.test(WORD)) {
-    throw new Error(
-      `entry must be a single word of letters only, got ${JSON.stringify(WORD)}`,
+  if (!/^[A-Za-z]+$/.test(text)) {
+    problems.push(
+      `entry must be one word of letters only, with no punctuation or digits: ${JSON.stringify(text)}`,
     );
   }
-  const words = WORD.trim().split(/\s+/);
-  if (words.length !== 1) {
-    throw new Error(`entry must be exactly one word, got ${words.length}`);
-  }
-  console.log(`entry: ${WORD}`);
-  console.log(`entry length: ${WORD.length} characters, ${words.length} word`);
-
-  const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-  mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, "entry.txt");
-  writeFileSync(outPath, WORD, "utf8");
-
-  const readBack = readFileSync(outPath, "utf8");
-  if (readBack !== WORD) {
-    throw new Error(`verification failed: ${outPath} does not match the entry`);
-  }
-  console.log(`wrote ${outPath} (${WORD.length} characters, verified)`);
+  return problems;
 }
 
-main();
+function run(): void {
+  const problems = findProblems(ENTRY);
+  if (problems.length > 0) {
+    throw new Error(`entry failed validation: ${problems.join("; ")}`);
+  }
+
+  console.log(`entry: ${ENTRY}`);
+  console.log(`entry length: ${[...ENTRY].length} characters, 1 word`);
+
+  const folder = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+  mkdirSync(folder, { recursive: true });
+  const target = join(folder, "entry.txt");
+  writeFileSync(target, ENTRY, "utf8");
+
+  // Read it back and make sure the bytes on disk are exactly the word.
+  const onDisk = readFileSync(target, "utf8");
+  if (onDisk !== ENTRY) {
+    throw new Error(
+      `verification failed: ${target} holds ${JSON.stringify(onDisk)}, expected ${JSON.stringify(ENTRY)}`,
+    );
+  }
+  console.log(
+    `wrote ${target} (${[...ENTRY].length} characters, ${Buffer.byteLength(ENTRY, "utf8")} bytes, verified)`,
+  );
+}
+
+run();

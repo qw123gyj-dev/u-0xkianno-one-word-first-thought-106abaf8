@@ -4,6 +4,6 @@
 
 # One Word, First Thought
 
-One word, the first that comes to mind — the scent of rain on dry earth. `main.ts` (Node 22, stdlib only, no network) writes the word to `$MAKEFUN_OUTPUT_DIR/entry.txt` (fallback `/output/entry.txt`), checks it is exactly one word within the 1–24 character gate, reads it back and verifies the bytes match.
+One word, the first that comes to mind — the sound of wind whispering through trees. `main.ts` (Node 22, stdlib only, no network) writes the word to `$MAKEFUN_OUTPUT_DIR/entry.txt` (fallback `/output/entry.txt`), checks it against the 1–24 character gate and the exactly-one-word rule before writing, then reads it back and verifies the bytes match.
 
-> "petrichor"
+> "psithurism"
